@@ -1,0 +1,49 @@
+---
+- name: Install Apache
+  become: yes
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - apache2
+    - apache2-dev
+    - apache2-doc
+  when: web_server == "apache"
+
+- name: Install Apache MOD_WSGI
+  become: yes
+  apt:
+    name: libapache2-mod-wsgi-py3
+  when: web_server == "apache"
+
+- name: Load wsgi_module in Apache conf
+  apache2_module:
+    state: present
+    name: wsgi
+  when: web_server == "apache"
+
+- name: Restarting Apache
+  become: yes
+  systemd:
+    name: apache2
+    state: restarted
+  when: web_server == "apache"
+
+- name: Make logs directory
+  file:
+    name: "{{ code_root }}/logs"
+    state: directory
+
+- name: Setup apache conf
+  become: yes
+  template:
+    src: templates/mod_wsgi_apache.j2
+    dest: /etc/apache2/sites-available/000-default.conf
+  when: web_server == "apache"
+
+- name: Enable apache conf as default
+  become: yes
+  command: a2ensite 000-default.conf
+  notify:
+  - restart apache2
+  when: web_server == "apache"

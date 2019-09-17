@@ -1,0 +1,12 @@
+app_owner: vagrant
+app_group: vagrant
+
+# Python variables
+python_venv_path: "{{ code_root }}pyenv{{ python_version }}"
+pip_requirements_path: "{{ app_root }}pip-requirements.txt"
+
+# Database variables
+database_user: example
+database_pass: password
+database_name: example
+database_encoding: UTF-8

@@ -1,0 +1,14 @@
+---
+- name: restart nginx
+  become: yes
+  service:
+    name: nginx
+    state: restarted
+  when: web_server == "nginx"
+
+- name: restart uwsgi
+  become: yes
+  file:
+    dest: "/etc/uwsgi/vassals/{{ app_name }}.ini"
+    state: touch
+  when: web_server == "nginx"

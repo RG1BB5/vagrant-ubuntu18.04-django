@@ -1,0 +1,41 @@
+---
+- name: Install Python{{ python_version }} Requirements
+  become: yes
+  apt:
+    name: software-properties-common
+    state: present
+
+- name: Install deadsnakes PPA
+  become: yes
+  apt_repository:
+    repo: ppa:deadsnakes/ppa
+    state: present
+
+- name: Update Apt
+  become: yes
+  apt:
+    upgrade: yes
+
+- name: Install Python Virtualenv
+  become: yes
+  apt:
+    name: python-virtualenv
+
+- name: Install Python{{ python_version }}
+  become: yes
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - python-setuptools
+    - "python{{ python_version }}"
+    - "python{{ python_version }}-dev"
+    - "python{{ python_major_version }}-pip"
+
+- name: Create Python{{ python_version }} Virtualenv and install pip requirements
+  pip:
+    requirements: "{{ pip_requirements_path }}"
+    virtualenv: "{{ python_venv_path }}"
+    virtualenv_python: "python{{ python_version }}"
+  when: pip_requirements_path is defined and python_venv_path is defined and python_version is defined
+  become_user: "{{ app_owner }}"

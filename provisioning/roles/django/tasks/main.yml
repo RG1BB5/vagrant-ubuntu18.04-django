@@ -1,0 +1,59 @@
+---
+- name: Install python-django-common
+  become: yes
+  apt:
+    name: python-django-common
+
+- name: Create app postgresql user
+  vars:
+    ansible_pipelining: yes
+  postgresql_user:
+    name: "{{ database_user }}"
+    password: "{{ database_pass }}"
+    role_attr_flags: SUPERUSER
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  when: database_engine == "postgresql"
+
+- name: Create app database
+  vars:
+    ansible_pipelining: yes
+  postgresql_db:
+    name: "{{ database_user }}"
+    encoding: "{{ database_encoding }}"
+    owner: "{{ database_user }}"
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  when: database_engine == "postgresql"
+
+- name: Start Project
+  command: "{{ python_venv_path }}/bin/django-admin.py startproject {{ app_name }} {{ app_root }}"
+  register: command_result
+  failed_when: command_result.rc != 0 and "already exists" not in command_result.stderr
+
+- name: Add local_settings.py
+  template:
+    src: templates/local_settings.py.j2
+    dest: "{{ app_root }}{{ app_name }}/local_settings.py"
+
+- name: Add a import local_settings.py to settings.py
+  blockinfile:
+    path: "{{ app_root }}{{ app_name }}/settings.py"
+    marker: "# {mark} local settings"
+    block: |
+      try:
+          from .local_settings import *
+      except:
+          pass
+
+- name: Run Migrations
+  command: "{{ python_venv_path }}/bin/python {{ app_root }}manage.py migrate"
+
+- name: Run collectstatic
+  command: "{{ python_venv_path }}/bin/python {{ app_root }}manage.py collectstatic --noinput"
+  notify:
+  - restart apache2
+  - restart uwsgi
+  - restart nginx

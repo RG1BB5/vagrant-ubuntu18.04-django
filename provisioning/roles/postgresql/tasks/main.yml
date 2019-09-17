@@ -1,0 +1,64 @@
+---
+- name: Install PostgreSQL Packages
+  become: yes
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - postgresql
+      - postgresql-client
+      - libpq-dev
+      - postgresql-client-common
+      - postgresql-contrib
+      - python-psycopg2
+      - python3-psycopg2
+  environment:
+    LC_ALL: en_GB.utf8
+
+- name: Update pg_hba.conf
+  become: yes
+  template:
+    src: templates/pg_hba.conf.j2
+    dest: /etc/postgresql/10/main/pg_hba.conf
+
+- name: Add Postgres User to main group
+  become: yes
+  user:
+    name: postgres
+    groups: "{{ app_group }}"
+    append: yes
+
+- name: Restart Postgres
+  become: yes
+  service:
+    name: postgresql
+    enabled: yes
+    state: restarted
+
+- name: Create vagrant postgresql user
+  vars:
+    ansible_pipelining: yes
+  postgresql_user:
+    name: "{{ app_owner }}"
+    password: "{{ app_owner }}"
+    role_attr_flags: SUPERUSER
+  become: yes
+  become_user: postgres
+  become_method: sudo
+
+- name: Create vagrant database
+  vars:
+    ansible_pipelining: yes
+  postgresql_db:
+    name: "{{ app_owner }}"
+    encoding: "{{ database_encoding }}"
+    owner: "{{ app_owner }}"
+  become: yes
+  become_user: postgres
+  become_method: sudo
+
+- name: Install Psycopg2
+  pip:
+    name: psycopg2
+    virtualenv: "{{ python_venv_path }}"
+    virtualenv_python: "python{{ python_version }}"

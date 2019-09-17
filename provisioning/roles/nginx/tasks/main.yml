@@ -1,0 +1,82 @@
+---
+- name: Install NGINX Packages
+  become: yes
+  apt:
+    name: nginx
+  when: web_server == "nginx"
+
+- name: Install uwsgi
+  pip:
+    name: uwsgi
+    virtualenv: "{{ python_venv_path }}"
+    virtualenv_python: "python{{ python_version }}"
+  when: web_server == "nginx"
+
+- name: Create NGINX uwsgi_params file
+  become: yes
+  template:
+    src: templates/uwsgi_params
+    dest: "{{ code_root }}uwsgi_params"
+  when: web_server == "nginx"
+
+- name: Create NGINX conf file
+  become: yes
+  template:
+    src: templates/nginx.conf.j2
+    dest: "/etc/nginx/sites-enabled/default"
+  when: web_server == "nginx"
+
+- name: Make etc/uwsgi dir
+  become: yes
+  file:
+    name: "/etc/uwsgi"
+    state: directory
+
+- name: Make uwsgi
+  become: yes
+  file:
+    name: "/etc/uwsgi/vassals"
+    state: directory
+
+- name: Create UWSGI emperor ini file
+  become: yes
+  template:
+    src: templates/emperor.ini
+    dest: "/etc/uwsgi/emperor.ini"
+  when: web_server == "nginx"
+
+- name: Create UWSGI emperor systemd service
+  become: yes
+  template:
+    src: templates/uwsgi.emperor.service.j2
+    dest: /etc/systemd/system/uwsgi.emperor.service
+  when: web_server == "nginx"
+
+- name: Create UWSGI ini file
+  become: yes
+  template:
+    src: templates/uwsgi.ini.j2
+    dest: "/etc/uwsgi/vassals/{{ app_name }}.ini"
+    owner: "{{ app_owner }}"
+  when: web_server == "nginx"
+
+- name: Start UWSGI emperor service
+  become: yes
+  systemd:
+    name: uwsgi.emperor.service
+    state: started
+  when: web_server == "nginx"
+
+- name: Restart service nginx, in all cases
+  become: yes
+  service:
+    name: nginx
+    state: started
+  when: web_server == "nginx"
+
+- name: "Touch {{ app_name }}.ini to restart vassal"
+  become: yes
+  file:
+    dest: "/etc/uwsgi/vassals/{{ app_name }}.ini"
+    state: touch
+  when: web_server == "nginx"

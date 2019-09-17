@@ -1,0 +1,38 @@
+<VirtualHost *:80>
+    ServerAdmin {{ server_admin }}
+
+    ServerName {{ server_name }}
+    {% for item in ansible_all_ipv4_addresses %}
+    ServerAlias {{ item }}
+    {% endfor %}
+
+
+    # Serve static files through apache
+    Alias /robots.txt {{ code_root }}static/robots.txt
+    Alias /favicon.ico {{ code_root }}static/favicon.ico
+
+    Alias /media/ {{ code_root }}media/
+    Alias /static/ {{ code_root }}static/
+
+    <Directory {{ code_root }}static>
+        Require all granted
+    </Directory>
+
+    <Directory {{ code_root }}media>
+        Require all granted
+    </Directory>
+
+    <Directory {{ app_root }}{{ app_name }}>
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
+
+    WSGIScriptAlias / {{ app_root }}{{ app_name }}/wsgi.py
+    WSGIDaemonProcess {{ app_name }} python-home={{ python_venv_path }} python-path={{ app_root }}:{{ app_root }}{{ app_name }}:{{ app_root }}../
+    WSGIProcessGroup {{ app_name }}
+
+    LogLevel info
+    ErrorLog {{ code_root }}logs/error.log
+    CustomLog {{ code_root }}logs/access.log combined
+</VirtualHost>

@@ -1,0 +1,15 @@
+[uwsgi]
+uid={{ app_owner }}
+gid={{ app_owner }}
+chdir={{ app_root }}
+home={{ python_venv_path }}
+master=True
+vacuum=True
+max-requests=5000
+logto={{ code_root }}logs/uwsgi.log
+# socket={{ app_root }}{{ app_name }}.sock
+socket=127.0.0.1:8000
+chown-socket={{ app_owner }}:www-data
+chmod-socket=664
+wsgi-file={{ app_root }}{{ app_name }}/wsgi.py
+touch-reload=/etc/uwsgi/vassals/{{ app_name }}.ini

@@ -1,0 +1,42 @@
+---
+- name: Generate SSH login message
+  command: "sh -c 'echo \"My IPs are: {{ ansible_all_ipv4_addresses|join(', ') }}\" > /etc/motd'"
+  become: true
+
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+
+- name: Update Dist packages
+  become: true
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Install Base Packages
+  become: true
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - git-core
+    - build-essential
+    - vim
+
+- name: Ensure GB locale exists
+  become: true
+  locale_gen:
+    name: en_GB
+    state: present
+
+- name: Ensure GB UTF8 locale exists
+  become: true
+  locale_gen:
+    name: en_GB.UTF-8
+    state: present
+
+- name: Set GB UTF8 as default locale
+  become: true
+  command: localectl set-locale LANG=en_GB.UTF-8

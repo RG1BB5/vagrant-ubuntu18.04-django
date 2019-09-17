@@ -1,0 +1,10 @@
+---
+- hosts: all
+  roles:
+    - common
+    - python
+    - postgresql
+    # - mysql
+    - apache
+    - nginx
+    - django
