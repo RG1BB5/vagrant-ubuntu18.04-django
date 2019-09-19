@@ -33,10 +33,16 @@
   register: command_result
   failed_when: command_result.rc != 0 and "already exists" not in command_result.stderr
 
+- name: Check that local_settings.py exists
+  stat:
+    path: "{{ app_root }}{{ app_name }}/local_settings.py"
+  register: local_settings_file
+
 - name: Add local_settings.py
   template:
     src: templates/local_settings.py.j2
     dest: "{{ app_root }}{{ app_name }}/local_settings.py"
+  when: local_settings_file.stat.exists == False
 
 - name: Add a import local_settings.py to settings.py
   blockinfile:
