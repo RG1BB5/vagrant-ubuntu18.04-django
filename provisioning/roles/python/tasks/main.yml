@@ -39,3 +39,10 @@
     virtualenv_python: "python{{ python_version }}"
   when: pip_requirements_path is defined and python_venv_path is defined and python_version is defined
   become_user: "{{ app_owner }}"
+
+- name: Activate Python{{ python_version }} Virtualenv on ssh
+  blockinfile:
+    path: ~/.profile
+    marker: "# {mark} activate venv"
+    block: |
+      . {{ python_venv_path }}/bin/activate
