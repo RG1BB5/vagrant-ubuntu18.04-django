@@ -35,6 +35,7 @@ Vagrant.configure("2") do |config|
         # Overwrite these values
         code_root: "/app/",
         app_root: "{{ code_root }}example/",
+        project_root: "{{ app_root }}example/",
         app_name: "example",
         python_major_version: 3,
         python_version: 3.6,
